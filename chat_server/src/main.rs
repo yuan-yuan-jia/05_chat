@@ -5,7 +5,7 @@ use tracing_subscriber::fmt::Layer;
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use chat::{get_router, AppConfig};
+use chat_server::{get_router, AppConfig};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
