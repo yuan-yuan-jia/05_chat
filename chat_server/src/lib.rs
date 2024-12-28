@@ -1,5 +1,7 @@
 mod config;
 mod handlers;
+mod error;
+mod models;
 
 use std::ops::Deref;
 use std::sync::Arc;

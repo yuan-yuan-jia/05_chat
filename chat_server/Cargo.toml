@@ -13,3 +13,8 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
+argon2 = { version = "0.5.3", features = ["std"] }
+chrono = { version = "0.4.38", features = ["serde"] }
+
+[dev-dependencies]
+sqlx-db-tester = "0.4.0"
