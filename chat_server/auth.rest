@@ -1,0 +1,25 @@
+### signup user
+POST http://localhost:8190/api/signup
+Content-Type: application/json
+
+{
+    "fullname": "Alice Chen",
+    "email": "alice@acme.org",
+    "password": "123456"
+}
+
+### signin user (valid)
+POST http://localhost:8190/api/signin
+Content-Type: application/json
+
+{
+    "email": "alice@acme.org",
+    "password": "123456"
+}
+### signin user (invalid)
+POST http://localhost:8190/api/signin
+Content-Type: application/json
+{
+    "email": "alice@acme.org",
+    "password": "123456"
+}
