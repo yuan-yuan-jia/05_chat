@@ -3,12 +3,16 @@ mod handlers;
 mod error;
 mod models;
 mod utils;
+mod middleware;
 use std::ops::Deref;
 use std::sync::Arc;
+use axum::middleware::from_fn_with_state;
 use axum::Router;
 use axum::routing::{get, patch, post};
 pub use config::AppConfig;
 use error::AppError;
+use handlers::list_chat_handler;
+use middleware::{set_layer, verify_token};
 use sqlx::PgPool;
 use crate::handlers::{index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler};
 use utils::{DecodingKey, EncodingKey};
@@ -32,17 +36,22 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
     let state = AppState::try_new(config).await?;
 
     let api = Router::new()
-        .route("/signin", post(sign_in_handler))
-        .route("/signup", post(sign_up_handler))
         .route("/chat/:id", patch(update_chat_handler).delete(update_chat_handler).post(update_chat_handler)
-        ).route("/chat/:id/messages", get(list_message_handler));
+        )
+        .route("/chat/:id/messages", get(list_message_handler))
+        .route("/chat", get(list_chat_handler))
+        .layer(from_fn_with_state(state.clone(), verify_token))
+        // routes doesn't need token verification
+        .route("/signin", post(sign_in_handler))
+        .route("/signup", post(sign_up_handler));
+
 
     let router = Router::new()
         .route("/", get(index_handler))
         .nest("/api", api)
         .with_state(state);
 
-    Ok(router)
+    Ok(set_layer(router))
 }
 
 impl Deref for AppState {
