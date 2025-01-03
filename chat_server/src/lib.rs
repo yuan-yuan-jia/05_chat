@@ -11,7 +11,7 @@ use axum::Router;
 use axum::routing::{get, patch, post};
 pub use config::AppConfig;
 use error::AppError;
-use handlers::{list_chat_handler, list_chat_users_handler};
+use handlers::{create_chat_handler, get_chat_handler, list_chat_handler, list_chat_users_handler};
 use middleware::{set_layer, verify_token};
 use sqlx::PgPool;
 use crate::handlers::{index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler};
@@ -37,10 +37,10 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
 
     let api = Router::new()
         .route("/users", get(list_chat_users_handler))
-        .route("/chat/:id", patch(update_chat_handler).delete(update_chat_handler).post(update_chat_handler)
+        .route("/chats/:id", get(get_chat_handler).patch(update_chat_handler).delete(update_chat_handler).post(update_chat_handler)
         )
-        .route("/chat/:id/messages", get(list_message_handler))
-        .route("/chat", get(list_chat_handler))
+        .route("/chats/:id/messages", get(list_message_handler))
+        .route("/chats", get(list_chat_handler).post(create_chat_handler))
         .layer(from_fn_with_state(state.clone(), verify_token))
         // routes doesn't need token verification
         .route("/signin", post(sign_in_handler))
