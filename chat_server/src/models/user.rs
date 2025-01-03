@@ -167,6 +167,8 @@ impl SigninUser {
 mod tests {
     use super::*;
     use anyhow::Result;
+    use sqlx::pool;
+    use crate::test_util::get_test_pool;
     use sqlx_db_tester::TestPg;
     use std::path::Path;
 
@@ -181,10 +183,7 @@ mod tests {
 
     #[tokio::test]
     async fn create_and_verify_user_should_work() -> Result<()> {
-        let tdb = TestPg::new(
-            "postgres://myuser:mypassword@my_postgres:5432/chat".to_string(),
-            Path::new("../migrations"),
-        );
+        let (tdb, pool) = get_test_pool(None).await;
         let pool = tdb.get_pool().await;
         let input = CreateUser::new("none","Tyr Chen", "tchen@acme.org", "hunter42");
         let user = User::create(&input, &pool).await?;
