@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, path::PathBuf};
 use std::fs::File;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
@@ -19,6 +19,7 @@ pub struct AuthConfig {
 pub struct ServerConfig {
     pub port: u16,
     pub db_url: String,
+    pub base_dir: PathBuf,
 }
 
 impl AppConfig {

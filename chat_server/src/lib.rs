@@ -6,12 +6,13 @@ mod utils;
 mod middleware;
 use std::ops::Deref;
 use std::sync::Arc;
+use anyhow::Context;
 use axum::middleware::from_fn_with_state;
 use axum::Router;
 use axum::routing::{get, patch, post};
 pub use config::AppConfig;
 use error::AppError;
-use handlers::{create_chat_handler, get_chat_handler, list_chat_handler, list_chat_users_handler};
+use handlers::{create_chat_handler, file_handler, get_chat_handler, list_chat_handler, list_chat_users_handler, upload_handler};
 use middleware::{set_layer, verify_token};
 use sqlx::PgPool;
 use crate::handlers::{index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler};
@@ -41,6 +42,8 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
         )
         .route("/chats/:id/messages", get(list_message_handler))
         .route("/chats", get(list_chat_handler).post(create_chat_handler))
+        .route("/upload", post(upload_handler))
+        .route("/files/:ws_id/*path", get(file_handler))
         .layer(from_fn_with_state(state.clone(), verify_token))
         // routes doesn't need token verification
         .route("/signin", post(sign_in_handler))
@@ -66,7 +69,7 @@ impl Deref for AppState {
 
 impl AppState {
     pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
-        
+        tokio::fs::create_dir_all(&config.server.base_dir).await?;
         let dk = DecodingKey::load(&config.auth.pk)?;
         let ek = EncodingKey::load(&config.auth.sk)?;
         let pool = PgPool::connect(&config.server.db_url).await?;
