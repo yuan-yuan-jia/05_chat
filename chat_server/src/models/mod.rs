@@ -2,6 +2,7 @@ mod user;
 mod workspace;
 mod chat;
 mod file;
+mod messages;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -57,8 +58,19 @@ pub struct Chat {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatFile {
+    pub ws_id: u64,
     pub ext: String, // extract ext from filename or mime type
     pub hash: String,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, PartialEq)]
+pub struct Message {
+    pub id: i64,
+    pub chat_id: i64,
+    pub sender_id: i64,
+    pub content: String,
+    pub files: Vec<String>,
+    pub created_at: DateTime<Utc>
 }
 
 #[cfg(test)]

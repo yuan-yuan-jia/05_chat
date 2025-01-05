@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS chats(
     id bigserial PRIMARY KEY,
     name varchar(128) NOT NULL UNIQUE,
     type chat_type NOT NULL,
+    ws_id bigint,
     -- user id list
     members bigint[] NOT NULL,
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
@@ -34,7 +35,7 @@ CREATE TABLE IF NOT EXISTS messages(
     chat_id bigint NOT NULL REFERENCES chats(id),
     sender_id bigint NOT NULL REFERENCES users(id),
     content text NOT NULL,
-    images text[],
+    files text[],
     created_at timestamptz DEFAULT CURRENT_TIMESTAMP
     );
 
