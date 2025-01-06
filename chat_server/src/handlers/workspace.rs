@@ -1,3 +1,4 @@
+use axum::Json;
 use axum::{extract::State, response::IntoResponse, Extension};
 
 use crate::error::AppError;
@@ -11,5 +12,6 @@ pub(crate) async fn list_chat_users_handler(
     Extension(user): Extension<User>,
     State(state): State<AppState>
 ) -> Result<impl IntoResponse, AppError> {
-    Ok("hello")
+   let users = state.fetch_chat_users(user.ws_id as _ ).await?;
+   Ok(Json(user))
 }

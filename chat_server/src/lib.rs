@@ -99,10 +99,10 @@ mod test_util {
 
     impl AppState {
         pub async fn new_for_test(
-            config: AppConfig
+           
         ) -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
             use sqlx_db_tester::TestPg;
-            
+            let config = AppConfig::load()?;
     
             let dk = DecodingKey::load(&config.auth.pk)?;
             let ek = EncodingKey::load(&config.auth.sk)?;
