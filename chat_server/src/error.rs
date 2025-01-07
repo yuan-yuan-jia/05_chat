@@ -1,6 +1,10 @@
 use std::fmt::Debug;
 
-use axum::{http::StatusCode, response::{IntoResponse, Response}, Json};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -10,7 +14,7 @@ pub enum AppError {
     #[error("password hash error: {0}")]
     PasswordHashError(#[from] argon2::password_hash::Error),
     #[error("jwt error: {0}")]
-    JwtError(#[from]jwt_simple::JWTError),
+    JwtError(#[from] jwt_simple::JWTError),
     #[error("CustomError: {0}")]
     CustomError(String),
     #[error("Email already exists: {0}")]
@@ -31,12 +35,10 @@ pub enum AppError {
     AnyhowError(#[from] anyhow::Error),
 }
 
-
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ErrorOutput {
     pub error: String,
 }
-
 
 impl ErrorOutput {
     pub fn new(error: impl Into<String>) -> Self {
@@ -44,7 +46,6 @@ impl ErrorOutput {
             error: error.into(),
         }
     }
-    
 }
 
 impl IntoResponse for AppError {

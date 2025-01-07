@@ -3,12 +3,7 @@ use tracing::warn;
 
 use super::REQUEST_ID_HEADER;
 
-
-
-pub async fn set_request_id(
-    mut req: Request,
-    next: Next,
-) -> Response {
+pub async fn set_request_id(mut req: Request, next: Next) -> Response {
     // if x-request-id exists, do nothing, otherwise generate a new one
 
     let id = match req.headers().get(REQUEST_ID_HEADER) {
@@ -19,19 +14,18 @@ pub async fn set_request_id(
                 Ok(v) => {
                     req.headers_mut().insert(REQUEST_ID_HEADER, v.clone());
                     Some(v)
-                },
+                }
                 Err(e) => {
                     warn!("parse generated request id failed: {}", e);
                     None
                 }
             }
         }
-
     };
 
     let mut res = next.run(req).await;
 
-    let Some(id) = id  else {
+    let Some(id) = id else {
         return res;
     };
 

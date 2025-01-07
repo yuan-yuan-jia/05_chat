@@ -1,12 +1,12 @@
 use axum::ServiceExt;
+use notify_server::get_router;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::fmt::Layer;
-use tracing_subscriber::Layer as _ ;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use notify_server::get_router;
+use tracing_subscriber::Layer as _;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

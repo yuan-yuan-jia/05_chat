@@ -1,10 +1,17 @@
-use axum::{extract::{Multipart, Path, Query, State}, http::{Extensions, HeaderMap}, response::IntoResponse, Extension, Json};
+use crate::models::ChatFile;
+use crate::{
+    error::AppError,
+    models::{CreateMessage, ListMessages, User},
+    AppState,
+};
+use axum::{
+    extract::{Multipart, Path, Query, State},
+    http::{Extensions, HeaderMap},
+    response::IntoResponse,
+    Extension, Json,
+};
 use tokio::fs;
 use tracing::{info, warn};
-use crate::models::ChatFile;
-use crate::{error::AppError, models::{CreateMessage, ListMessages, User}, AppState};
-
-
 
 pub(crate) async fn send_message_handler(
     Extension(user): Extension<User>,
@@ -21,20 +28,17 @@ pub(crate) async fn list_message_handler(
     State(state): State<AppState>,
     Path(id): Path<u64>,
     Query(input): Query<ListMessages>,
-) ->  Result<impl IntoResponse, AppError>{
+) -> Result<impl IntoResponse, AppError> {
     let messages = state.list_messages(input, id).await?;
-    
+
     Ok(Json(messages))
 }
-
 
 pub(crate) async fn file_handler(
     Extension(user): Extension<User>,
     State(state): State<AppState>,
     Path((ws_id, path)): Path<(i64, String)>,
-) 
- -> Result<impl IntoResponse ,AppError> 
- {
+) -> Result<impl IntoResponse, AppError> {
     if user.ws_id != ws_id {
         return Err(AppError::NotFound(
             "File doesn't exist or you don't have permission to access it".to_string(),
@@ -45,8 +49,7 @@ pub(crate) async fn file_handler(
     let path = base_dir.join(path);
 
     if !path.exists() {
-        return Err(AppError::NotFound(
-            "File doesn't exist".to_string()));
+        return Err(AppError::NotFound("File doesn't exist".to_string()));
     }
 
     let mime = mime_guess::from_path(&path).first_or_octet_stream();
@@ -55,14 +58,13 @@ pub(crate) async fn file_handler(
     headers.insert("Content-Type", mime.to_string().parse().unwrap());
 
     Ok((headers, body))
- }
+}
 
-
- pub(crate) async fn upload_handler(
+pub(crate) async fn upload_handler(
     Extension(user): Extension<User>,
     State(state): State<AppState>,
     mut multipart: Multipart,
- ) -> Result<impl IntoResponse ,AppError> {
+) -> Result<impl IntoResponse, AppError> {
     let ws_id = user.ws_id as u64;
     let base_dir = &state.config.server.base_dir;
     let mut files = vec![];
@@ -74,16 +76,15 @@ pub(crate) async fn file_handler(
             continue;
         };
 
-        let file = ChatFile::new(ws_id,&filename,&data);
+        let file = ChatFile::new(ws_id, &filename, &data);
         let path = file.path(&base_dir);
         if path.exists() {
             info!("File {} already exists: {:?}", filename, path);
-        }else {
+        } else {
             fs::create_dir_all(path.parent().expect("file path parent should exists")).await?;
             fs::write(path, data).await?;
         }
         files.push(file.url());
-        
     }
     Ok(Json(files))
- }
+}

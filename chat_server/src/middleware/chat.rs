@@ -1,20 +1,24 @@
-use axum::{extract::{FromRequestParts, Path, Request, State}, middleware::Next, response::Response};
+use axum::{
+    extract::{FromRequestParts, Path, Request, State},
+    middleware::Next,
+    response::Response,
+};
 
 use crate::{error::AppError, models::User, AppState};
 use axum::response::IntoResponse;
 
-pub async fn verify_chat(
-    State(state): State<AppState>, 
-    req: Request, 
-    next: Next
-) -> Response {
+pub async fn verify_chat(State(state): State<AppState>, req: Request, next: Next) -> Response {
     let (mut parts, body) = req.into_parts();
-    let Path(chat_id) = Path::<u64>::from_request_parts(&mut parts, &state).await.unwrap();
+    let Path(chat_id) = Path::<u64>::from_request_parts(&mut parts, &state)
+        .await
+        .unwrap();
 
-    
     let user = parts.extensions.get::<User>().unwrap();
-    
-    if !state.is_chat_member(chat_id, user.id as _).await.unwrap_or_default()
+
+    if !state
+        .is_chat_member(chat_id, user.id as _)
+        .await
+        .unwrap_or_default()
     {
         let err = AppError::CreateMessageError(format!(
             "User {} are not a member of chat {chat_id}",
@@ -24,7 +28,6 @@ pub async fn verify_chat(
     }
 
     let req = Request::from_parts(parts, body);
-    
-    next.run(req).await
 
+    next.run(req).await
 }

@@ -1,11 +1,11 @@
+use chat_server::{get_router, AppConfig};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::fmt::Layer;
-use tracing_subscriber::Layer as _;
 use tracing_subscriber::prelude::__tracing_subscriber_SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
-use chat_server::{get_router, AppConfig};
+use tracing_subscriber::Layer as _;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

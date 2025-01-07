@@ -1,15 +1,15 @@
-mod user;
-mod workspace;
 mod chat;
 mod file;
 mod messages;
+mod user;
+mod workspace;
 
+pub use chat::CreateChat;
 use chrono::{DateTime, Utc};
+pub use messages::{CreateMessage, ListMessages};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-pub use user::{SigninUser, CreateUser};
-pub use chat::CreateChat;
-pub use messages::{CreateMessage, ListMessages};
+pub use user::{CreateUser, SigninUser};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, PartialEq)]
 pub struct User {
@@ -71,12 +71,12 @@ pub struct Message {
     pub sender_id: i64,
     pub content: String,
     pub files: Vec<String>,
-    pub created_at: DateTime<Utc>
+    pub created_at: DateTime<Utc>,
 }
 
 #[cfg(test)]
 impl User {
-    pub fn new(id: i64, ws_id: i64 ,fullname: &str, email: &str) -> Self {
+    pub fn new(id: i64, ws_id: i64, fullname: &str, email: &str) -> Self {
         Self {
             id,
             ws_id,

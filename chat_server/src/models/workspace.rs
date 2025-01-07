@@ -5,17 +5,13 @@ use crate::{error::AppError, AppState};
 use super::{ChatUser, Workspace};
 
 impl AppState {
-    pub async fn create_workspace(
-        &self,
-        name: &str,
-        user_id: i32,
-    ) -> Result<Workspace, AppError> {
+    pub async fn create_workspace(&self, name: &str, user_id: i32) -> Result<Workspace, AppError> {
         let ws = sqlx::query_as(
             r#"
                INSERT INTO workspaces (name, owner_id)
                 VALUES ($1, $2)
                RETURNING id, name, owner_id, created_at
-            "#
+            "#,
         )
         .bind(name)
         .bind(user_id as i64)
@@ -24,7 +20,6 @@ impl AppState {
 
         Ok(ws)
     }
-
 
     // pub async fn update_owner(&self, owner_id: u64, pool: &PgPool) -> Result<Self, AppError> {
     //     // update owner_id in two cases 1) owner_id = 0 2) owner's ws_id = id
@@ -42,11 +37,7 @@ impl AppState {
     //     .await?;
     //     Ok(ws)
     // }
-    pub async fn find_workspace_by_name(
-        &self,
-        name: &str
-    
-    ) -> Result<Option<Workspace>, AppError> {
+    pub async fn find_workspace_by_name(&self, name: &str) -> Result<Option<Workspace>, AppError> {
         let ws = sqlx::query_as(
             r#"
         SELECT id, name, owner_id, created_at
@@ -60,7 +51,7 @@ impl AppState {
         Ok(ws)
     }
     #[allow(dead_code)]
-    pub async fn find_workspace_by_id(&self,id: u64) -> Result<Option<Workspace>, AppError> {
+    pub async fn find_workspace_by_id(&self, id: u64) -> Result<Option<Workspace>, AppError> {
         let ws = sqlx::query_as(
             r#"
         SELECT id, name, owner_id, created_at
@@ -89,13 +80,8 @@ impl AppState {
     // }
 }
 
-
 impl Workspace {
-    pub async fn update_owner(
-        &self,
-        owner_id: u64,
-        pool: &PgPool
-    ) -> Result<Self,AppError> {
+    pub async fn update_owner(&self, owner_id: u64, pool: &PgPool) -> Result<Self, AppError> {
         // update owner_id in two cases 1) owner_id = 0 2) owner's ws_id = id
         let ws = sqlx::query_as(
             r#"       UPDATE workspaces
@@ -105,12 +91,10 @@ impl Workspace {
         "#,
         )
         .bind(owner_id as i64)
-        .bind(self.id)       
+        .bind(self.id)
         .fetch_one(pool)
         .await?;
 
         Ok(ws)
     }
 }
-
-

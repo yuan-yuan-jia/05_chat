@@ -1,7 +1,7 @@
-use std::{env, path::PathBuf};
-use std::fs::File;
 use anyhow::bail;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::{env, path::PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -26,18 +26,17 @@ impl AppConfig {
     pub fn load() -> anyhow::Result<AppConfig> {
         // read from ./app.yml or /etc/config/app.yml or from env CHAT_CONFIG
         let ret = match (
-                File::open("app.yml"),
-                File::open("/etc/config/app.yml"),
-                env::var("CHAT_CONFIG")
+            File::open("app.yml"),
+            File::open("/etc/config/app.yml"),
+            env::var("CHAT_CONFIG"),
         ) {
             (Ok(reader), _, _) => serde_yaml::from_reader(reader)?,
-            (_,Ok(reader),_) => serde_yaml::from_reader(reader)?,
-            (_,_,Ok(path)) => serde_yaml::from_reader(File::open(path)?)?,
+            (_, Ok(reader), _) => serde_yaml::from_reader(reader)?,
+            (_, _, Ok(path)) => serde_yaml::from_reader(File::open(path)?)?,
             _ => bail!("Config file not found"),
         };
 
         Ok(ret)
-
     }
 }
 
@@ -48,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_load() {
-        let app_config =  AppConfig::load();
+        let app_config = AppConfig::load();
         assert!(app_config.is_ok());
         println!("{:#?}", app_config.unwrap());
     }

@@ -5,19 +5,17 @@ use crate::{error::AppError, AppState};
 use super::{user, ChatFile, Message};
 use std::str::FromStr;
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct  CreateMessage {
-   pub content: String, 
-   pub files: Vec<String>,
+pub struct CreateMessage {
+    pub content: String,
+    pub files: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListMessages {
     pub last_id: Option<u64>,
     pub limit: u64,
-} 
+}
 
 impl AppState {
     pub async fn create_message(
@@ -29,20 +27,19 @@ impl AppState {
         let base_dir = &self.config.server.base_dir;
         // verify content - not empty
         if input.content.is_empty() {
-            return Err(
-                AppError::CreateMessageError("Content cannot be empty".to_string())
-            );
+            return Err(AppError::CreateMessageError(
+                "Content cannot be empty".to_string(),
+            ));
         }
 
         // verify files exists
         for s in &input.files {
             let file = ChatFile::from_str(s)?;
             if !file.path(base_dir).exists() {
-                return Err(
-                    AppError::CreateMessageError(
-                        format!("File {} doesn't exist", s)
-                    )
-                );
+                return Err(AppError::CreateMessageError(format!(
+                    "File {} doesn't exist",
+                    s
+                )));
             }
         }
         // create mesasge
@@ -78,7 +75,7 @@ impl AppState {
         AND id < $2
         ORDER BY id DESC
         LIMIT $3
-            "#
+            "#,
         )
         .bind(chat_id as i64)
         .bind(last_id as i64)

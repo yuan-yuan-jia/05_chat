@@ -1,25 +1,30 @@
 mod config;
-mod handlers;
 mod error;
+mod handlers;
+mod middleware;
 mod models;
 mod utils;
-mod middleware;
-use std::ops::Deref;
-use std::sync::Arc;
+use crate::handlers::{
+    index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler,
+};
 use anyhow::Context;
 use axum::middleware::from_fn_with_state;
-use axum::Router;
 use axum::routing::{get, patch, post};
+use axum::Router;
 pub use config::AppConfig;
 use error::AppError;
-use handlers::{create_chat_handler, delete_chat_handler, file_handler, get_chat_handler, list_chat_handler, list_chat_users_handler, send_message_handler, upload_handler};
+use handlers::{
+    create_chat_handler, delete_chat_handler, file_handler, get_chat_handler, list_chat_handler,
+    list_chat_users_handler, send_message_handler, upload_handler,
+};
+use middleware::verify_chat;
 use middleware::{set_layer, verify_token};
 use sqlx::PgPool;
-use crate::handlers::{index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler};
-use middleware::verify_chat;
+use std::ops::Deref;
+use std::sync::Arc;
 use utils::{DecodingKey, EncodingKey};
 
-#[derive(Debug,Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct AppState {
     inner: Arc<AppStateInner>,
 }
@@ -32,30 +37,30 @@ pub(crate) struct AppStateInner {
     pub(crate) pool: PgPool,
 }
 
-
-
 pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
     let state = AppState::try_new(config).await?;
 
     let chat = Router::new()
-    .route("/:id", get(get_chat_handler)
-    .patch(update_chat_handler)
-    .delete(delete_chat_handler)
-    .post(send_message_handler),)
-    .route("/:id/messages", get(list_message_handler))
-    .layer(from_fn_with_state(state.clone(), verify_chat))
-    .route("/", get(list_chat_handler).post(create_chat_handler));
-    
-    
+        .route(
+            "/:id",
+            get(get_chat_handler)
+                .patch(update_chat_handler)
+                .delete(delete_chat_handler)
+                .post(send_message_handler),
+        )
+        .route("/:id/messages", get(list_message_handler))
+        .layer(from_fn_with_state(state.clone(), verify_chat))
+        .route("/", get(list_chat_handler).post(create_chat_handler));
+
     let api = Router::new()
-    .route("/users", get(list_chat_users_handler))
-    .nest("/chats", chat)
-    .route("/upload", post(upload_handler))
-    .route("/files/:ws_id/*path", get(file_handler))
-    .layer(from_fn_with_state(state.clone(), verify_token))
-    // routes doesn't need token verification
-    .route("/signin", post(sign_in_handler))
-    .route("/signup", post(sign_up_handler));
+        .route("/users", get(list_chat_users_handler))
+        .nest("/chats", chat)
+        .route("/upload", post(upload_handler))
+        .route("/files/:ws_id/*path", get(file_handler))
+        .layer(from_fn_with_state(state.clone(), verify_token))
+        // routes doesn't need token verification
+        .route("/signin", post(sign_in_handler))
+        .route("/signup", post(sign_up_handler));
 
     let router = Router::new()
         .route("/", get(index_handler))
@@ -73,21 +78,22 @@ impl Deref for AppState {
     }
 }
 
-
 impl AppState {
     pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
         tokio::fs::create_dir_all(&config.server.base_dir).await?;
         let dk = DecodingKey::load(&config.auth.pk)?;
         let ek = EncodingKey::load(&config.auth.sk)?;
         let pool = PgPool::connect(&config.server.db_url).await?;
-        Ok(
-            Self {
-                inner: Arc::new(AppStateInner { config,ek,dk,pool }),
-            }
-        )
+        Ok(Self {
+            inner: Arc::new(AppStateInner {
+                config,
+                ek,
+                dk,
+                pool,
+            }),
+        })
     }
 }
-
 
 impl core::fmt::Debug for AppStateInner {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -103,19 +109,16 @@ mod test_util {
     use sqlx::{Executor, PgPool};
     use sqlx_db_tester::TestPg;
 
-
     impl AppState {
-        pub async fn new_for_test(
-           
-        ) -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
+        pub async fn new_for_test() -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
             use sqlx_db_tester::TestPg;
             let config = AppConfig::load()?;
-    
+
             let dk = DecodingKey::load(&config.auth.pk)?;
             let ek = EncodingKey::load(&config.auth.sk)?;
             let post = config.server.db_url.rfind('/').expect("invalid db_url");
             let server_url = &config.server.db_url[..post];
-           
+
             let (tdb, pool) = get_test_pool(Some(server_url)).await;
             let state = Self {
                 inner: Arc::new(AppStateInner {
@@ -132,13 +135,10 @@ mod test_util {
     pub async fn get_test_pool(url: Option<&str>) -> (TestPg, PgPool) {
         let url = match url {
             Some(url) => url.to_string(),
-            None => "postgres://myuser:mypassword@172.17.0.3:5432".to_string()
+            None => "postgres://myuser:mypassword@172.17.0.3:5432".to_string(),
         };
 
-        let tdb = TestPg::new(
-            url,
-            std::path::Path::new("../migrations"),
-        );
+        let tdb = TestPg::new(url, std::path::Path::new("../migrations"));
         let pool = tdb.get_pool().await;
 
         // run prepared sql to insert test dat
@@ -154,6 +154,5 @@ mod test_util {
 
         ts.commit().await.expect("commit transaction failed");
         (tdb, pool)
-
     }
 }
