@@ -9,7 +9,9 @@ use tower_http::trace::DefaultOnRequest;
 mod auth;
 mod request_id;
 mod server_time;
+mod chat;
 pub use auth::verify_token;
+pub use chat::verify_chat;
 
 const REQUEST_ID_HEADER: &str = "x-request-id";
 const SERVER_TIME_HEADER: &str = "x-server-time";

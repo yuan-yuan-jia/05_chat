@@ -12,10 +12,11 @@ use axum::Router;
 use axum::routing::{get, patch, post};
 pub use config::AppConfig;
 use error::AppError;
-use handlers::{create_chat_handler, file_handler, get_chat_handler, list_chat_handler, list_chat_users_handler, upload_handler};
+use handlers::{create_chat_handler, delete_chat_handler, file_handler, get_chat_handler, list_chat_handler, list_chat_users_handler, send_message_handler, upload_handler};
 use middleware::{set_layer, verify_token};
 use sqlx::PgPool;
 use crate::handlers::{index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler};
+use middleware::verify_chat;
 use utils::{DecodingKey, EncodingKey};
 
 #[derive(Debug,Clone)]
@@ -36,19 +37,25 @@ pub(crate) struct AppStateInner {
 pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
     let state = AppState::try_new(config).await?;
 
+    let chat = Router::new()
+    .route("/:id", get(get_chat_handler)
+    .patch(update_chat_handler)
+    .delete(delete_chat_handler)
+    .post(send_message_handler),)
+    .route("/:id/messages", get(list_message_handler))
+    .layer(from_fn_with_state(state.clone(), verify_chat))
+    .route("/", get(list_chat_handler).post(create_chat_handler));
+    
+    
     let api = Router::new()
-        .route("/users", get(list_chat_users_handler))
-        .route("/chats/:id", get(get_chat_handler).patch(update_chat_handler).delete(update_chat_handler).post(update_chat_handler)
-        )
-        .route("/chats/:id/messages", get(list_message_handler))
-        .route("/chats", get(list_chat_handler).post(create_chat_handler))
-        .route("/upload", post(upload_handler))
-        .route("/files/:ws_id/*path", get(file_handler))
-        .layer(from_fn_with_state(state.clone(), verify_token))
-        // routes doesn't need token verification
-        .route("/signin", post(sign_in_handler))
-        .route("/signup", post(sign_up_handler));
-
+    .route("/users", get(list_chat_users_handler))
+    .nest("/chats", chat)
+    .route("/upload", post(upload_handler))
+    .route("/files/:ws_id/*path", get(file_handler))
+    .layer(from_fn_with_state(state.clone(), verify_token))
+    // routes doesn't need token verification
+    .route("/signin", post(sign_in_handler))
+    .route("/signup", post(sign_up_handler));
 
     let router = Router::new()
         .route("/", get(index_handler))

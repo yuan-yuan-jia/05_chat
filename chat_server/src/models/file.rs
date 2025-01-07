@@ -18,7 +18,7 @@ impl ChatFile {
     }
 
     pub fn url(&self) -> String {
-        format!("/files/{}/{}", self.ws_id, self.hash_to_path())
+        format!("/files/{}", self.hash_to_path())
     }
 
     pub fn path(&self, base_dir: &Path) -> PathBuf {
@@ -39,7 +39,10 @@ impl FromStr for ChatFile {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let Some(s) = s.strip_prefix("/files/") else {
             return Err(
-                AppError::ChatFileError("Invalid chat file path".to_string())
+                AppError::ChatFileError(format!(
+                    "Invalid chat file path: {}",
+                    s
+                ))
             );
         };
 
