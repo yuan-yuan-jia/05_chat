@@ -2,7 +2,7 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 
 use crate::{
     error::{AppError, ErrorOutput},
-    models::{CreateUser, SigninUser, User},
+    models::{CreateUser, SigninUser},
     AppState,
 };
 

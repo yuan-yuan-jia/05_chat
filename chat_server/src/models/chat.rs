@@ -1,9 +1,8 @@
+use chat_core::{Chat, ChatType};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 
 use crate::{error::AppError, AppState};
 
-use super::{Chat, ChatType, ChatUser};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateChat {

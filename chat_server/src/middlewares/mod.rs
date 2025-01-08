@@ -3,8 +3,9 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use chat_core::User;
 
-use crate::{error::AppError, models::User, AppState};
+use crate::{error::AppError, AppState};
 use axum::response::IntoResponse;
 
 pub async fn verify_chat(State(state): State<AppState>, req: Request, next: Next) -> Response {

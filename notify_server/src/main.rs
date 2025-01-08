@@ -1,5 +1,5 @@
 use axum::ServiceExt;
-use notify_server::get_router;
+use notify_server::{get_router, setup_pg_listener};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry().with(layer).init();
     let addr = "0.0.0.0:6687";
     let app = get_router();
-
+    setup_pg_listener().await?;
     let listener = TcpListener::bind(addr).await?;
     info!("Listening on: {}", addr);
     axum::serve(listener, app.into_make_service()).await?;

@@ -4,10 +4,8 @@ use crate::AppState;
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use chat_core::ChatUser;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
-
-use super::{ChatUser, Workspace};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateUser {
@@ -67,7 +65,10 @@ impl AppState {
         .await?;
 
         if ws.owner_id == 0 {
-            ws.update_owner(user.id as _, &self.pool).await?;
+            self.update_workspace_owner(
+                ws.id as _,
+                user.id as _
+            ).await?;
         }
 
         Ok(user)
@@ -200,11 +201,7 @@ impl SigninUser {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_util::get_test_pool;
     use anyhow::Result;
-    use sqlx::pool;
-    use sqlx_db_tester::TestPg;
-    use std::path::Path;
 
     #[test]
     fn hash_password_and_verify_should_work() -> Result<()> {
@@ -218,7 +215,6 @@ mod tests {
     #[tokio::test]
     async fn create_and_verify_user_should_work() -> Result<()> {
         let (tdb, state) = AppState::new_for_test().await?;
-        let pool = tdb.get_pool().await;
         let input = CreateUser::new("none", "Tyr Chen", "tchen@acme.org", "hunter42");
         let user = state.create_user(&input).await?;
         assert_eq!(user.email, input.email);

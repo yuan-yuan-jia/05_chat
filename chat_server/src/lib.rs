@@ -1,9 +1,8 @@
 mod config;
 mod error;
 mod handlers;
-mod middleware;
+mod middlewares;
 mod models;
-mod utils;
 use crate::handlers::{
     index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler,
 };
@@ -17,12 +16,16 @@ use handlers::{
     create_chat_handler, delete_chat_handler, file_handler, get_chat_handler, list_chat_handler,
     list_chat_users_handler, send_message_handler, upload_handler,
 };
-use middleware::verify_chat;
-use middleware::{set_layer, verify_token};
+use chat_core::{
+    middlewares::{set_layer, verify_token, TokenVerify},
+    DecodingKey,EncodingKey,User
+};
+use middlewares::verify_chat;
 use sqlx::PgPool;
+use tokio::fs;
 use std::ops::Deref;
 use std::sync::Arc;
-use utils::{DecodingKey, EncodingKey};
+
 
 #[derive(Debug, Clone)]
 pub(crate) struct AppState {
@@ -57,7 +60,7 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
         .nest("/chats", chat)
         .route("/upload", post(upload_handler))
         .route("/files/:ws_id/*path", get(file_handler))
-        .layer(from_fn_with_state(state.clone(), verify_token))
+        .layer(from_fn_with_state(state.clone(), verify_token::<AppState>))
         // routes doesn't need token verification
         .route("/signin", post(sign_in_handler))
         .route("/signup", post(sign_up_handler));
@@ -100,6 +103,14 @@ impl core::fmt::Debug for AppStateInner {
         f.debug_struct("AppStateInner")
             .field("config", &self.config)
             .finish()
+    }
+}
+
+impl TokenVerify for AppState {
+    type Error = AppError;
+
+    fn verify(&self, token: &str) -> Result<User, Self::Error> {
+        Ok(self.dk.verify(token)?)
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     error::AppError,
-    models::{Chat, CreateChat, User},
+    models::{CreateChat},
     AppState,
 };
 use axum::{
@@ -9,6 +9,7 @@ use axum::{
     response::IntoResponse,
     Extension, Json,
 };
+use chat_core::User;
 
 pub(crate) async fn list_chat_handler(
     Extension(user): Extension<User>,
