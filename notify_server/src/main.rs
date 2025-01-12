@@ -1,3 +1,4 @@
+use notify_server::config::AppConfig;
 use notify_server::{get_router, setup_pg_listener};
 use tokio::net::TcpListener;
 use tracing::info;
@@ -12,8 +13,8 @@ async fn main() -> anyhow::Result<()> {
     let layer = Layer::new().with_filter(LevelFilter::INFO);
     tracing_subscriber::registry().with(layer).init();
     let addr = "0.0.0.0:6687";
-    let (app, state) = get_router();
-    setup_pg_listener(state).await?;
+    let config = AppConfig::load().expect("Failed to load config");
+    let app = get_router(config).await?;
     let listener = TcpListener::bind(addr).await?;
     info!("Listening on: {}", addr);
     axum::serve(listener, app.into_make_service()).await?;

@@ -22,8 +22,6 @@ pub(crate) async fn sse_handler(
     State(state): State<AppState>,
     TypedHeader(user_agent): TypedHeader<headers::UserAgent>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
-    info!("`{}` connected", user_agent.as_str());
-
     // A `Stream` that repeats an event every second
     //
     // You can also create streams from tokio channels using the wrappers in

@@ -22,27 +22,24 @@ use chat_core::{
 };
 use middlewares::verify_chat;
 use sqlx::PgPool;
-use tokio::fs;
 use std::ops::Deref;
 use std::sync::Arc;
 
 
 #[derive(Debug, Clone)]
-pub(crate) struct AppState {
+pub struct AppState {
     inner: Arc<AppStateInner>,
 }
 
 #[allow(unused)]
-pub(crate) struct AppStateInner {
+pub struct AppStateInner {
     pub(crate) config: AppConfig,
     pub(crate) dk: DecodingKey,
     pub(crate) ek: EncodingKey,
     pub(crate) pool: PgPool,
 }
 
-pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
-    let state = AppState::try_new(config).await?;
-
+pub async fn get_router(state: AppState) -> Result<Router, AppError> {
     let chat = Router::new()
         .route(
             "/:id",
@@ -114,7 +111,7 @@ impl TokenVerify for AppState {
     }
 }
 
-#[cfg(test)]
+#[cfg(feature = "test-util")]
 mod test_util {
     use super::*;
     use sqlx::{Executor, PgPool};
@@ -122,7 +119,6 @@ mod test_util {
 
     impl AppState {
         pub async fn new_for_test() -> Result<(sqlx_db_tester::TestPg, Self), AppError> {
-            use sqlx_db_tester::TestPg;
             let config = AppConfig::load()?;
 
             let dk = DecodingKey::load(&config.auth.pk)?;

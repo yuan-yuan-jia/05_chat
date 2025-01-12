@@ -1,7 +1,12 @@
 [package]
-name = "chat_server"
+name = "chat-server"
 version = "0.1.0"
 edition = "2021"
+
+
+[features]
+default = []
+test-util = ["http-body-util", "sqlx-db-tester"]
 
 [dependencies]
 anyhow = { workspace = true }
@@ -25,7 +30,8 @@ hex = "0.4.3"
 mime_guess = "2.0.4"
 sha1 = "0.10.6"
 chat-core ={ workspace = true}
+http-body-util = { version = "0.1.1", optional = true}
+sqlx-db-tester = { version = "0.4.2", optional = true}
 
 [dev-dependencies]
-sqlx-db-tester = "0.4.0"
-http-body-util = "0.1.1"
+chat-server = {workspace = true, features = ["test-util"]}
