@@ -32,6 +32,10 @@ sha1 = "0.10.6"
 chat-core ={ workspace = true}
 http-body-util = { version = "0.1.1", optional = true}
 sqlx-db-tester = { version = "0.4.2", optional = true}
+utoipa = { version = "4.2.0", features = ["axum_extras", "chrono"] }
+utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
+utoipa-redoc = { version = "3.0.0", features = ["axum"] }
+utoipa-rapidoc = { version = "3.0.0", features = ["axum"] }
 
 [dev-dependencies]
 chat-server = {workspace = true, features = ["test-util"]}

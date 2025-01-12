@@ -3,10 +3,10 @@ mod error;
 mod handlers;
 mod middlewares;
 mod models;
+mod openapi;
 use crate::handlers::{
-    index_handler, list_message_handler, sign_in_handler, sign_up_handler, update_chat_handler,
+    index_handler, list_message_handler, signin_handler, signup_handler, update_chat_handler,
 };
-use anyhow::Context;
 use axum::middleware::from_fn_with_state;
 use axum::routing::{get, patch, post};
 use axum::Router;
@@ -24,6 +24,7 @@ use middlewares::verify_chat;
 use sqlx::PgPool;
 use std::ops::Deref;
 use std::sync::Arc;
+use openapi::OpenApiRouter;
 
 
 #[derive(Debug, Clone)]
@@ -59,10 +60,11 @@ pub async fn get_router(state: AppState) -> Result<Router, AppError> {
         .route("/files/:ws_id/*path", get(file_handler))
         .layer(from_fn_with_state(state.clone(), verify_token::<AppState>))
         // routes doesn't need token verification
-        .route("/signin", post(sign_in_handler))
-        .route("/signup", post(sign_up_handler));
+        .route("/signin", post(signin_handler))
+        .route("/signup", post(signup_handler));
 
     let router = Router::new()
+        .openapi()
         .route("/", get(index_handler))
         .nest("/api", api)
         .with_state(state);

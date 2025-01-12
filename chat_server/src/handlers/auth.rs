@@ -5,13 +5,21 @@ use crate::{
     models::{CreateUser, SigninUser},
     AppState,
 };
+use utoipa::ToSchema;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, ToSchema,serde::Deserialize)]
 pub struct AuthOutput {
     token: String,
 }
 
-pub(crate) async fn sign_in_handler(
+#[utoipa::path(
+    post,
+    path = "/api/signin",
+    responses(
+        (status = 200, description = "User signed in", body = AuthOutput),
+    )
+)]
+pub(crate) async fn signin_handler(
     State(state): State<AppState>,
     Json(input): Json<SigninUser>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -28,8 +36,19 @@ pub(crate) async fn sign_in_handler(
         }
     }
 }
-
-pub(crate) async fn sign_up_handler(
+#[utoipa::path(
+    post,
+    path = "/api/signup",
+    responses(
+        (status = 200,description = "User created", body = AuthOutput)
+    )
+)]
+/// Create a new user in the chat system with email and password.
+///
+/// - If the email already exists, it will return 409.
+/// - Otherwise, it will return 201 with a token.
+/// - If the workspace doesn't exist, it will create one.
+pub(crate) async fn signup_handler(
     State(state): State<AppState>,
     Json(input): Json<CreateUser>,
 ) -> Result<impl IntoResponse, AppError> {
@@ -50,7 +69,7 @@ mod tests {
     async fn signup_should_work() -> Result<()> {
         let (_tdb, state) = AppState::new_for_test().await?;
         let input = CreateUser::new("none", "Tyr Chen", "tchen@acme.org", "Hunter42");
-        let ret = sign_up_handler(State(state), Json(input))
+        let ret = signup_handler(State(state), Json(input))
             .await?
             .into_response();
         assert_eq!(ret.status(), StatusCode::CREATED);
@@ -63,8 +82,8 @@ mod tests {
     async fn signup_duplicate_user_should_409() -> Result<()> {
         let (_tdb, state) = AppState::new_for_test().await?;
         let input = CreateUser::new("none", "Tyr Chen", "tchen@acme.org", "Hunter42");
-        sign_up_handler(State(state.clone()), Json(input.clone())).await?;
-        let ret = sign_up_handler(State(state.clone()), Json(input.clone()))
+        signup_handler(State(state.clone()), Json(input.clone())).await?;
+        let ret = signup_handler(State(state.clone()), Json(input.clone()))
             .await
             .into_response();
         assert_eq!(ret.status(), StatusCode::CONFLICT);
@@ -83,7 +102,7 @@ mod tests {
         let user = CreateUser::new(ws, name, email, password);
         state.create_user(&user).await?;
         let input = SigninUser::new(email, password);
-        let ret = sign_in_handler(State(state), Json(input))
+        let ret = signin_handler(State(state), Json(input))
             .await?
             .into_response();
         assert_eq!(ret.status(), StatusCode::OK);
@@ -98,7 +117,7 @@ mod tests {
         let email = "alice@acme.org";
         let password = "Hunter42";
         let input = SigninUser::new(email, password);
-        let ret = sign_in_handler(State(state), Json(input))
+        let ret = signin_handler(State(state), Json(input))
             .await
             .into_response();
         assert_eq!(ret.status(), StatusCode::FORBIDDEN);

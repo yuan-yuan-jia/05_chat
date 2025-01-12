@@ -6,16 +6,22 @@ use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use chat_core::ChatUser;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// create a user with email and password
+#[derive(Debug, Clone, Serialize, ToSchema,Deserialize)]
 pub struct CreateUser {
+    /// Full name of the user
     pub fullname: String,
+    /// Email of the user
     pub email: String,
+    /// Workspace name - if not exists, create one
     pub workspace: String,
+    /// Password of the user
     pub password: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, ToSchema,Deserialize)]
 pub struct SigninUser {
     pub email: String,
     pub password: String,

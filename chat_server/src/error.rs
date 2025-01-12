@@ -6,6 +6,7 @@ use axum::{
     Json,
 };
 use thiserror::Error;
+use utoipa::ToSchema;
 
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -35,7 +36,7 @@ pub enum AppError {
     AnyhowError(#[from] anyhow::Error),
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize, ToSchema,serde::Deserialize)]
 pub struct ErrorOutput {
     pub error: String,
 }
